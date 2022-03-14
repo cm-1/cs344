@@ -1,0 +1,20 @@
+Originally, when trying the 1M-element array version on Windows, the program
+would compile without error/warning, and would run without printing any
+exceptions, but the program wouldn't print/do anything. When I tried to debug,
+it didn't even make it to the first line. It turned out that the reason was
+Windows has a max stack size of 1MB, which the h_array was exceeding.
+So, I had to declare h_array on the heap instead and then manually delete it at
+the end of the program. Anyway, onto the results.
+
+Below, I'll use the shorthand "T" for threads and "E" for elements.
+Also, "A" for atomic and "N" for naive.
+
+A 1,000,000 T --- 10,000 E:       ~0.125 ms (the original, unedited code)
+A 1,000,000 T --- 1,000,000 E:    ~0.024 ms
+N 1,000,000 T --- 1,000,000 E:    ~0.035 ms
+A 1,000,000 T --- 100 E:          ~0.125 ms
+N 1,000,000 T --- 100 E:          ~0.0225 ms
+A 10,000,000 T --- 100 E:         ~1.22 ms
+
+
+

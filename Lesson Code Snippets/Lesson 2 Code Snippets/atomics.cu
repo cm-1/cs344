@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "gputimer.h"
+//#include <limits>
 
 #define NUM_THREADS 1000000
 #define ARRAY_SIZE  100
@@ -35,12 +36,23 @@ __global__ void increment_atomic(int *g)
 
 int main(int argc,char **argv)
 {   
+    // Some stuff I used to try and figure out why it wasn't running for
+    // an array of 1,000,000 elements before I realized it was caused by
+    // the default stack size max of 1MB on Windows.
+    printf("Starting program!\n");
+    printf("Checking CUDA memory availability:");
+    size_t free, total;
+    printf("\n");
+    cudaMemGetInfo(&free,&total);   
+    printf("%zd B free of total %zd B\n",free,total);
+
+
     GpuTimer timer;
     printf("%d total threads in %d blocks writing into %d array elements\n",
            NUM_THREADS, NUM_THREADS / BLOCK_WIDTH, ARRAY_SIZE);
 
     // declare and allocate host memory
-    int h_array[ARRAY_SIZE];
+    int* h_array = new int[ARRAY_SIZE];
     const int ARRAY_BYTES = ARRAY_SIZE * sizeof(int);
  
     // declare, allocate, and zero out GPU memory
@@ -61,5 +73,7 @@ int main(int argc,char **argv)
  
     // free GPU memory allocation and exit
     cudaFree(d_array);
+    delete[] h_array;
+
     return 0;
 }

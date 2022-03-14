@@ -1,0 +1,1 @@
+CUDA_ADD_EXECUTABLE(AtomicSnippet atomics.cu gputimer.h)

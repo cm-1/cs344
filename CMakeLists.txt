@@ -4,6 +4,7 @@
 # <author>  Quan Tran Minh. edit by Johannes Kast, Michael Sarahan </author>
 # <email>   quantm@unist.ac.kr  kast.jo@googlemail.com msarahan@gmail.com</email>
 ############################################################################
+# Modified slightly in this fork by Christopher Mossman
 
 cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 project(cs344)
@@ -43,6 +44,7 @@ if(CUDA_FOUND)
   add_subdirectory ("Problem Sets/Problem Set 4")
   add_subdirectory ("Problem Sets/Problem Set 5")
   add_subdirectory ("Problem Sets/Problem Set 6")
+  add_subdirectory ("Lesson Code Snippets/Lesson 2 Code Snippets")
 else(CUDA_FOUND)
   message("CUDA is not installed on this system.")
 endif()
