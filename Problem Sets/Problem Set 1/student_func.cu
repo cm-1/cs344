@@ -53,7 +53,7 @@ void rgba_to_greyscale(const uchar4* const rgbaImage,
 
   int idxX = blockIdx.x * blockDim.x + threadIdx.x;
   int idxY = blockIdx.y * blockDim.y + threadIdx.y;
-  if (idxX > numCols || idxY > numRows) {
+  if (idxX >= numCols || idxY >= numRows) {
       return;
   }
 
