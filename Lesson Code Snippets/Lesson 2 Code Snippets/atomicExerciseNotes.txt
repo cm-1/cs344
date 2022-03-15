@@ -16,5 +16,11 @@ A 1,000,000 T --- 100 E:          ~0.125 ms
 N 1,000,000 T --- 100 E:          ~0.0225 ms
 A 10,000,000 T --- 100 E:         ~1.22 ms
 
+The video explains these differences as arising from a few things.
+First, writing naively to 100 elements is a bit faster than 1,000,000 because of caching.
+Interestingly, writing atomically to 1M elements is faster than naively on my device.
+I don't know why this is, and the video's several years old at this point, so
+maybe there's been some relatively-recent development that causes this.
+Of course, the version with 10M threads is slowest because it's doing the most stuff.
 
 
