@@ -113,39 +113,40 @@ void gaussian_blur(const unsigned char* const inputChannel,
   // We reference this a lot.
   int halfFilterWidth = filterWidth/2;
 
+  // Shared memory will be used for both the kernel and segments of the image
+  // that will be used by this block.
+  // The technique to have multiple shared arrays is advised by:
+  // https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
   extern __shared__ float sharedMem[];
   float *localFilter = sharedMem;
   unsigned char *localChannelData = (unsigned char*)&sharedMem[filterWidth*filterWidth];
 
-  // TODO
-  // NOTE: Be sure to compute any intermediate results in floating point
-  // before storing the final result as unsigned char.
+  //Find the global image position for this filter position
   int posX = blockIdx.x * blockDim.x + threadIdx.x;
   int posY = blockIdx.y * blockDim.y + threadIdx.y;
-
-
-  // NOTE: Be careful not to try to access memory that is outside the bounds of
-  // the image. You'll want code that performs the following check before accessing
-  // GPU memory:
-  //
-  // if ( absolute_image_position_x >= numCols ||
-  //      absolute_image_position_y >= numRows )
-  // {
-  //     return;
-  // }
-
   int idx1D = posY * numCols + posX;
-  //Find the global image position for this filter position
 
   //clamp to boundary of the image
   int posYBounded = min(posY, (numRows - 1));
   int posXBounded = min(posX, (numCols - 1));
 
+  // We now need to copy the filter and local image region into shared memory.
+  // For the local image memory, the region we need to copy is going to be
+  // larger than our block dimensions. There is a (filterWidth/2) pixel border
+  // on each edge. The code below handles this by making all threads copy the
+  // pixel with matching index over, as well as certain pixels in the nearest
+  // border(s) if the thread's index is close enough to the edge.
+  // I realize now, though, looking at other solutions, that to reduce warp
+  // divergence, it's probably better to have only threads at the two edges,
+  // rather than all four, have this differing behaviour. Don't have time to
+  // rewrite this now, but want to later.
+
   int globalIdx1D = posYBounded * numCols + posXBounded;
   int localIdx1D = ((threadIdx.y + halfFilterWidth) * (blockDim.x + filterWidth - 1)) + threadIdx.x + halfFilterWidth;
   unsigned char centrePixel = inputChannel[globalIdx1D];
-  localChannelData[localIdx1D] = centrePixel;
+  localChannelData[localIdx1D] = centrePixel; // Copies pixel with "same" index as thread.
 
+  // See which edgex we are near.
   int sideXDelta = -halfFilterWidth;
   int sideYDelta = -halfFilterWidth;
   if (threadIdx.x >= blockDim.x - halfFilterWidth) {
@@ -165,6 +166,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
   int sidePosYBounded = min(max((int)(blockIdx.y * blockDim.y) + sideY, 0), (numRows - 1));
   int sidePosXBounded = min(max((int)(blockIdx.x * blockDim.x) + sideX, 0), (numCols - 1));
 
+  // If thread near enough to block edge, copy "border"/"halo" pixels too.
   if (sideX < 0 || sideX >= blockDim.x) {
     globalIdx1D = posYBounded * numCols + sidePosXBounded;
     localIdx1D = ((threadIdx.y + halfFilterWidth) * (blockDim.x + filterWidth - 1)) + sideX + halfFilterWidth;
@@ -189,11 +191,23 @@ void gaussian_blur(const unsigned char* const inputChannel,
   }
   __syncthreads();
 
+
+  // NOTE: Be careful not to try to access memory that is outside the bounds of
+  // the image. You'll want code that performs the following check before accessing
+  // GPU memory:
+  //
+  // if ( absolute_image_position_x >= numCols ||
+  //      absolute_image_position_y >= numRows )
+  // {
+  //     return;
+  // }
   if (posX >= numCols || posY >= numRows) {
     return;
   }
 
-
+  // TODO
+  // NOTE: Be sure to compute any intermediate results in floating point
+  // before storing the final result as unsigned char.
   float result = 0.f;
   //For every value in the filter around the pixel (c, r)
   for (int filter_r = -filterWidth/2; filter_r <= filterWidth/2; ++filter_r) {
@@ -202,6 +216,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
 
       float image_value = static_cast<float>(localChannelData[localIdx1D]);
       float filter_value = localFilter[(filter_r + filterWidth/2) * filterWidth + filter_c + filterWidth/2];
+
 
       result += image_value * filter_value;
     }

@@ -22,3 +22,5 @@
 build
 bin
 
+# Notes/tests I don't want to commit (e.g., because of copyright/IP concerns)
+stuffToGitignore

@@ -1,0 +1,3 @@
+Coffee texture comes from https://publicdomaintextures.com/
+
+rgbLarger.png was quickly made by me in Gimp.

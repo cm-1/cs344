@@ -1,0 +1,36 @@
+Current HW2 solution is slightly off for the 2K coffee picture at a few select pixels.
+I'm not sure off-hand whether this is a bug or not, since it works fine for
+the provided sample image. I've tried some other online solutions
+and all of them did the same, so I'm thinking it's okay.
+
+Speedups are hard to detect on the Udacity sample image, since it's relatively
+small and my current only CUDA-capable GPU is much faster than what they seem
+to have used for assessments. So, to evaluate speed-up, I found a solution from
+someone else online that said they got a speed-up, and tested mine against theirs
+on the coffee picture. It's a bit hard to compare runtimes, since I can run
+the code multiple times and get different times. The "median" runtimes seem
+comparable, though, and the technique I used also seems similar. So I think
+it would've passed Udacity's standards.
+
+Nonetheless, if I have more time in the future, I'd like to investigate the 
+coffee texture errors and speed testing some more. I'd also like to, as a sanity
+check, code a naive non-shared-memory version of the kernel to speed-test against
+the shared-memory one on the the coffee texture or other large images.
+
+More specific info can be found in the comments of the student_func.cu class.
+
+I've added some links to other solutions, with my assessments of them, to my
+gitignored notes. I may include these in the git repo at some point, but right
+now, I just want to be able to freely write honest/personal critiques of how well
+they work without worrying about writing anything negative about them that others would see.
+
+As stated in root-level README.md:
+I currently wrote my HW2 solution where pixels near any of the four edges are responsible
+for copying the "halo" pixels outside of the block into shared memory.
+Another solution I found online, though, shifts things so that most pixels just copy one pixel,
+but it's the one shifted by (-halfFilterWidth, -halfFilterWidth) relative to them instead
+of the one exactly matching their coordinates, and then for all pixels within the "full"
+filterWidth - 1 from the two "max" edges, they copy extra pixels to the sides as needed.
+After doing some reading about what warps are, I realize this way is probably better for minimizing
+warp divergence. So I'd probably rewrite mine to match.
+
